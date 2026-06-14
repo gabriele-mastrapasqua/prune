@@ -44,7 +44,7 @@ complete -c dust -s B -l bars-on-right -d 'percent bars moved to right side of s
 complete -c dust -s R -l screen-reader -d 'For screen readers. Removes bars. Adds new column: depth level (May want to use -p too for full path)'
 complete -c dust -l skip-total -d 'No total row will be displayed'
 complete -c dust -s f -l filecount -d 'Directory \'size\' is number of child files instead of disk size'
-complete -c dust -s i -l ignore-hidden -d 'Do not display hidden files'
+complete -c dust -l ignore-hidden -d 'Do not display hidden files'
 complete -c dust -s t -l file-types -d 'show only these file types'
 complete -c dust -s P -l no-progress -d 'Disable the progress indication'
 complete -c dust -l print-errors -d 'Print path with errors'

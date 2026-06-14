@@ -79,7 +79,6 @@ set edit:completion:arg-completer[dust] = {|@words|
             cand --skip-total 'No total row will be displayed'
             cand -f 'Directory ''size'' is number of child files instead of disk size'
             cand --filecount 'Directory ''size'' is number of child files instead of disk size'
-            cand -i 'Do not display hidden files'
             cand --ignore-hidden 'Do not display hidden files'
             cand -t 'show only these file types'
             cand --file-types 'show only these file types'

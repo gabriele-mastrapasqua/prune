@@ -91,7 +91,7 @@ pub struct Cli {
 
     /// Do not display hidden files
     // Do not use 'h' this is used by 'help'
-    #[arg(short, long)]
+    #[arg(long)]
     pub ignore_hidden: bool,
 
     /// Exclude filepaths matching this regex. To ignore png files type: -v

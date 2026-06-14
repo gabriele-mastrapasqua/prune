@@ -82,7 +82,6 @@ Register-ArgumentCompleter -Native -CommandName 'dust' -ScriptBlock {
             [CompletionResult]::new('--skip-total', '--skip-total', [CompletionResultType]::ParameterName, 'No total row will be displayed')
             [CompletionResult]::new('-f', '-f', [CompletionResultType]::ParameterName, 'Directory ''size'' is number of child files instead of disk size')
             [CompletionResult]::new('--filecount', '--filecount', [CompletionResultType]::ParameterName, 'Directory ''size'' is number of child files instead of disk size')
-            [CompletionResult]::new('-i', '-i', [CompletionResultType]::ParameterName, 'Do not display hidden files')
             [CompletionResult]::new('--ignore-hidden', '--ignore-hidden', [CompletionResultType]::ParameterName, 'Do not display hidden files')
             [CompletionResult]::new('-t', '-t', [CompletionResultType]::ParameterName, 'show only these file types')
             [CompletionResult]::new('--file-types', '--file-types', [CompletionResultType]::ParameterName, 'show only these file types')

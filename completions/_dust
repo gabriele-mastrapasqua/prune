@@ -98,7 +98,6 @@ m\:"last modified time"))' \
 '--skip-total[No total row will be displayed]' \
 '-f[Directory '\''size'\'' is number of child files instead of disk size]' \
 '--filecount[Directory '\''size'\'' is number of child files instead of disk size]' \
-'-i[Do not display hidden files]' \
 '--ignore-hidden[Do not display hidden files]' \
 '(-d --depth -D --only-dir)-t[show only these file types]' \
 '(-d --depth -D --only-dir)--file-types[show only these file types]' \
