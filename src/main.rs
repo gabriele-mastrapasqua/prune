@@ -123,8 +123,14 @@ fn main() {
     let options = Cli::parse();
     let config = get_config(options.config.as_ref());
 
-    // Interactive TUI mode (only when explicitly requested)
-    if options.interactive {
+    // Check if we have paths as arguments or files-from input
+    let has_paths = options.params.as_ref().is_some_and(|v| !v.is_empty());
+    let has_files_input = options.files_from.is_some() || options.files0_from.is_some();
+
+    // Interactive TUI mode (default when no paths/files-input and no other mode specified)
+    if options.interactive
+        || (!has_paths && !has_files_input && !options.advisor && !options.history)
+    {
         let dev_mode = !options.no_dev;
         let min_size = options.min_size.as_deref();
         let risk = options.risk.as_deref();

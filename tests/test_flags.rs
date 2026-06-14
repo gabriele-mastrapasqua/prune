@@ -305,7 +305,7 @@ pub fn test_show_files_by_invert_regex_match_multiple() {
 
 #[test]
 pub fn test_no_color() {
-    let output = build_command(vec!["-c"]);
+    let output = build_command(vec!["-c", "tests/test_dir/"]);
     // Red is 31
     assert!(!output.contains("\x1B[31m"));
     assert!(!output.contains("\x1B[0m"));
@@ -313,7 +313,7 @@ pub fn test_no_color() {
 
 #[test]
 pub fn test_force_color() {
-    let output = build_command(vec!["-C"]);
+    let output = build_command(vec!["-C", "tests/test_dir/"]);
     // Red is 31
     assert!(output.contains("\x1B[31m"));
     assert!(output.contains("\x1B[0m"));
