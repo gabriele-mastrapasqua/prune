@@ -221,7 +221,7 @@ pub fn draw_it(
         allowed_width - longest_string_length - 7
     };
 
-    let first_size_bar: String = std::iter::repeat(BLOCKS[0]).take(max_bar_length).collect();
+    let first_size_bar: String = std::iter::repeat_n(BLOCKS[0], max_bar_length).collect();
 
     let display_data = DisplayData {
         initial: idd,

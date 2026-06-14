@@ -49,7 +49,7 @@ fn scan_nvm(home: &Path, min_size: u64) -> Vec<Recommendation> {
     let mut recs = Vec::new();
 
     for (version, path) in &versions {
-        let is_current = current_version.as_ref().map_or(false, |cv| version == cv);
+        let is_current = current_version.as_ref() == Some(version);
 
         if let Ok(total) = dir_size(path) {
             if total < min_size {
@@ -182,7 +182,7 @@ fn scan_fnm(home: &Path, min_size: u64) -> Vec<Recommendation> {
 
             let is_current = current_version
                 .as_ref()
-                .map_or(false, |cv| version.contains(cv));
+                .is_some_and(|cv| version.contains(cv));
 
             let install_dir = path.join("installation");
             let scan_path = if install_dir.exists() {
@@ -320,9 +320,9 @@ fn scan_pyenv(home: &Path, min_size: u64) -> Vec<Recommendation> {
                 .unwrap_or("")
                 .to_string();
 
-            let is_current = current_version.as_ref().map_or(false, |cv| {
-                version == *cv || version.starts_with(&format!("{}.", cv))
-            });
+            let is_current = current_version
+                .as_ref()
+                .is_some_and(|cv| version == *cv || version.starts_with(&format!("{}.", cv)));
 
             if let Ok(total) = dir_size(&path) {
                 if total < min_size {
@@ -523,7 +523,7 @@ fn scan_rustup(home: &Path, min_size: u64) -> Vec<Recommendation> {
                 .unwrap_or("")
                 .to_string();
 
-            let is_default = current.as_ref().map_or(false, |c| toolchain.starts_with(c));
+            let is_default = current.as_ref().is_some_and(|c| toolchain.starts_with(c));
 
             if let Ok(total) = dir_size(&path) {
                 if total < min_size {

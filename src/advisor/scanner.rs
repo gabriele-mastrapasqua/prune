@@ -97,7 +97,7 @@ impl AdvisorEngine {
         });
 
         // Sort by size descending
-        recommendations.sort_by(|a, b| b.size.cmp(&a.size));
+        recommendations.sort_by_key(|b| std::cmp::Reverse(b.size));
         recommendations
     }
 
