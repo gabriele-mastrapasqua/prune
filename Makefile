@@ -23,13 +23,19 @@ lint:
 fmt-fix:
 	cargo fmt --all
 
-# Build release binary and install to system
+# Build release binary and install to user bin directory
 install: build
-	@echo "Installing prune to /usr/local/bin..."
-	@sudo cp target/release/prune /usr/local/bin/prune
-	@sudo chmod +x /usr/local/bin/prune
-	@echo "✓ prune installed successfully!"
+	@mkdir -p ~/.local/bin
+	@cp target/release/prune ~/.local/bin/prune
+	@chmod +x ~/.local/bin/prune
+	@echo "✓ prune installed to ~/.local/bin/prune"
 	@echo "Run 'prune' to start the interactive TUI"
+	@if ! echo $$PATH | grep -q "$$HOME/.local/bin"; then \
+		echo ""; \
+		echo "Note: ~/.local/bin is not in your PATH."; \
+		echo "Add this to your ~/.zshrc or ~/.bashrc:"; \
+		echo '  export PATH="$$HOME/.local/bin:$$PATH"'; \
+	fi
 
 # Uninstall from system
 uninstall:
