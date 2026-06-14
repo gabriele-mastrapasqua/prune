@@ -663,7 +663,7 @@ mod tests {
             size: 2_u64.pow(size),
             children: vec![],
         };
-        let first_size_bar = repeat_n(BLOCKS[0], 13).collect();
+        let first_size_bar = std::iter::repeat(BLOCKS[0]).take(13).collect();
         let dd = DrawData {
             indent: "".into(),
             percent_bar: first_size_bar,

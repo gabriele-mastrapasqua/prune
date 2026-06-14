@@ -9,7 +9,7 @@ use std::str;
  */
 
 fn build_command<T: AsRef<OsStr>>(command_args: Vec<T>) -> String {
-    let mut cmd = cargo_bin_cmd!("dust");
+    let mut cmd = cargo_bin_cmd!("prune");
 
     // Hide progress bar
     cmd.arg("-P");
@@ -125,7 +125,7 @@ pub fn test_files0_from_flag_file() {
 
 #[test]
 pub fn test_files_from_flag_stdin() {
-    let mut cmd = cargo_bin_cmd!("dust");
+    let mut cmd = cargo_bin_cmd!("prune");
     cmd.arg("-P").arg("--files-from").arg("-");
     let input = b"tests/test_dir_files_from/a_file\ntests/test_dir_files_from/hello_file\n";
     cmd.write_stdin(input.as_ref());
@@ -139,7 +139,7 @@ pub fn test_files_from_flag_stdin() {
 
 #[test]
 pub fn test_files0_from_flag_stdin() {
-    let mut cmd = cargo_bin_cmd!("dust");
+    let mut cmd = cargo_bin_cmd!("prune");
     cmd.arg("-P").arg("--files0-from").arg("-");
     let input = b"tests/test_dir_files_from/a_file\0tests/test_dir_files_from/hello_file\0";
     cmd.write_stdin(input.as_ref());
@@ -153,7 +153,7 @@ pub fn test_files0_from_flag_stdin() {
 
 #[test]
 pub fn test_with_bad_param() {
-    let mut cmd = cargo_bin_cmd!("dust");
+    let mut cmd = cargo_bin_cmd!("prune");
     cmd.arg("-P").arg("bad_place");
     let output_error = cmd.unwrap_err();
     let result = output_error.as_output().unwrap();
@@ -168,8 +168,8 @@ pub fn test_hidden_flag() {
     assert!(output.contains(".hidden_file"));
     assert!(output.contains("┌─┴ test_dir_hidden_entries"));
 
-    // Check that adding the '-h' flag causes us to not see hidden files
-    let output = build_command(vec!["-c", "-i", "tests/test_dir_hidden_entries/"]);
+    // Check that adding the '--ignore-hidden' flag causes us to not see hidden files
+    let output = build_command(vec!["-c", "--ignore-hidden", "tests/test_dir_hidden_entries/"]);
     assert!(!output.contains(".hidden_file"));
     assert!(output.contains("┌── test_dir_hidden_entries"));
 }

@@ -123,9 +123,8 @@ fn main() {
     let options = Cli::parse();
     let config = get_config(options.config.as_ref());
 
-    // Interactive TUI mode (default if no other mode specified)
-    let no_args = options.params.as_ref().map_or(true, |v| v.is_empty());
-    if options.interactive || (!options.advisor && !options.history && no_args) {
+    // Interactive TUI mode (only when explicitly requested)
+    if options.interactive {
         let dev_mode = !options.no_dev;
         let min_size = options.min_size.as_deref();
         let risk = options.risk.as_deref();
