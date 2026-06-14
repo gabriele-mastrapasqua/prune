@@ -20,15 +20,26 @@ A fast, intelligent disk usage analyzer that helps you reclaim disk space by ide
 
 ## 🚀 Installation
 
+### Via Homebrew (Recommended)
 ```bash
-git clone https://github.com/gabrielemastrapasqua/prune.git
-cd prune
-cargo build --release
-./target/release/prune
+brew tap gabriele-mastrapasqua/prune
+brew install prune
 ```
 
-Or add to PATH:
+### Via Makefile
 ```bash
+git clone https://github.com/gabriele-mastrapasqua/prune.git
+cd prune
+make install
+```
+
+This will clean, build release, and install to `/usr/local/bin/prune`.
+
+### Manual
+```bash
+git clone https://github.com/gabriele-mastrapasqua/prune.git
+cd prune
+cargo build --release
 sudo cp target/release/prune /usr/local/bin/
 ```
 
@@ -82,9 +93,11 @@ prune -a --category cache   # Filter by category
 ## 🧪 Development
 
 ```bash
-cargo build --release
-cargo test
-cargo run --release -- -a
+make test          # Run fmt, lint, and tests
+make build         # Build in debug mode
+make release       # Build release binary
+make install       # Clean, build, install to /usr/local/bin
+make uninstall     # Remove from /usr/local/bin
 ```
 
 ## 📄 License
