@@ -37,10 +37,10 @@ install: build
 		echo '  export PATH="$$HOME/.local/bin:$$PATH"'; \
 	fi
 
-# Uninstall from system
+# Uninstall from user bin directory
 uninstall:
-	@echo "Removing prune from /usr/local/bin..."
-	@sudo rm -f /usr/local/bin/prune
+	@echo "Removing prune from ~/.local/bin..."
+	@rm -f ~/.local/bin/prune
 	@echo "✓ prune uninstalled"
 
 # Clean build artifacts

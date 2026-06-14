@@ -33,14 +33,18 @@ cd prune
 make install
 ```
 
-This will clean, build release, and install to `/usr/local/bin/prune`.
+This will build and install to `~/.local/bin/prune` (no password required). If `~/.local/bin` is not in your PATH, add this to your `~/.zshrc` or `~/.bashrc`:
+```bash
+export PATH="$HOME/.local/bin:$PATH"
+```
 
 ### Manual
 ```bash
 git clone https://github.com/gabriele-mastrapasqua/prune.git
 cd prune
 cargo build --release
-sudo cp target/release/prune /usr/local/bin/
+mkdir -p ~/.local/bin
+cp target/release/prune ~/.local/bin/
 ```
 
 ## 📖 Usage
