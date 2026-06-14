@@ -1,12 +1,12 @@
-use crate::advisor::known_paths;
-use crate::advisor::models::*;
-use crate::advisor::rules;
 use crate::advisor::heuristics;
+use crate::advisor::known_paths;
 use crate::advisor::ml_library;
+use crate::advisor::models::*;
 use crate::advisor::package_manager;
+use crate::advisor::rules;
 use crate::advisor::safe_list;
 use crate::advisor::version_manager;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 pub struct AdvisorEngine {
     pub min_size: u64,
@@ -101,7 +101,7 @@ impl AdvisorEngine {
         recommendations
     }
 
-    fn scan_known_paths(&self, _home: &PathBuf, recs: &mut Vec<Recommendation>) {
+    fn scan_known_paths(&self, _home: &Path, recs: &mut Vec<Recommendation>) {
         for known in known_paths::get_known_paths() {
             let path = known.path;
 
@@ -147,7 +147,7 @@ impl AdvisorEngine {
         }
     }
 
-    fn scan_dev_dirs(&self, home: &PathBuf, recs: &mut Vec<Recommendation>) {
+    fn scan_dev_dirs(&self, home: &Path, recs: &mut Vec<Recommendation>) {
         // Scan common project-containing directories for build artifacts
         let scan_roots = [
             home.join("source"),
@@ -161,14 +161,54 @@ impl AdvisorEngine {
         ];
 
         let patterns: &[(&str, Category, &str, Risk)] = &[
-            ("node_modules", Category::Dev(DevKind::BuildArtifact), "Node.js dependencies", Risk::Safe),
-            ("target", Category::Dev(DevKind::BuildArtifact), "Rust build artifacts", Risk::Safe),
-            (".venv", Category::Dev(DevKind::VEnv), "Python virtual environment", Risk::Safe),
-            ("venv", Category::Dev(DevKind::VEnv), "Python virtual environment", Risk::Safe),
-            (".next", Category::Dev(DevKind::BuildArtifact), "Next.js build output", Risk::Safe),
-            (".nuxt", Category::Dev(DevKind::BuildArtifact), "Nuxt build output", Risk::Safe),
-            (".output", Category::Dev(DevKind::BuildArtifact), "Build output", Risk::Safe),
-            (".gradle", Category::Dev(DevKind::BuildArtifact), "Gradle cache", Risk::Safe),
+            (
+                "node_modules",
+                Category::Dev(DevKind::BuildArtifact),
+                "Node.js dependencies",
+                Risk::Safe,
+            ),
+            (
+                "target",
+                Category::Dev(DevKind::BuildArtifact),
+                "Rust build artifacts",
+                Risk::Safe,
+            ),
+            (
+                ".venv",
+                Category::Dev(DevKind::VEnv),
+                "Python virtual environment",
+                Risk::Safe,
+            ),
+            (
+                "venv",
+                Category::Dev(DevKind::VEnv),
+                "Python virtual environment",
+                Risk::Safe,
+            ),
+            (
+                ".next",
+                Category::Dev(DevKind::BuildArtifact),
+                "Next.js build output",
+                Risk::Safe,
+            ),
+            (
+                ".nuxt",
+                Category::Dev(DevKind::BuildArtifact),
+                "Nuxt build output",
+                Risk::Safe,
+            ),
+            (
+                ".output",
+                Category::Dev(DevKind::BuildArtifact),
+                "Build output",
+                Risk::Safe,
+            ),
+            (
+                ".gradle",
+                Category::Dev(DevKind::BuildArtifact),
+                "Gradle cache",
+                Risk::Safe,
+            ),
         ];
 
         for root in &scan_roots {
@@ -189,20 +229,27 @@ impl AdvisorEngine {
                             if !sub_path.is_dir() {
                                 continue;
                             }
-                            let dir_name = sub_path.file_name()
-                                .and_then(|n| n.to_str())
-                                .unwrap_or("");
+                            let dir_name =
+                                sub_path.file_name().and_then(|n| n.to_str()).unwrap_or("");
 
                             for (pattern, category, reason, risk) in patterns {
                                 if dir_name == *pattern {
                                     if let Ok(total) = dir_size(&sub_path) {
                                         if total >= self.min_size {
                                             let cmd = match *pattern {
-                                                "node_modules" => format!("rm -rf '{}'", sub_path.display()),
+                                                "node_modules" => {
+                                                    format!("rm -rf '{}'", sub_path.display())
+                                                }
                                                 "target" => "cargo clean".to_string(),
-                                                ".venv" | "venv" => format!("rm -rf '{}'", sub_path.display()),
-                                                ".next" | ".nuxt" | ".output" => format!("rm -rf '{}'", sub_path.display()),
-                                                ".gradle" => format!("rm -rf '{}'", sub_path.display()),
+                                                ".venv" | "venv" => {
+                                                    format!("rm -rf '{}'", sub_path.display())
+                                                }
+                                                ".next" | ".nuxt" | ".output" => {
+                                                    format!("rm -rf '{}'", sub_path.display())
+                                                }
+                                                ".gradle" => {
+                                                    format!("rm -rf '{}'", sub_path.display())
+                                                }
                                                 _ => format!("rm -rf '{}'", sub_path.display()),
                                             };
                                             recs.push(Recommendation {
@@ -236,6 +283,7 @@ impl AdvisorEngine {
     }
 }
 
+#[allow(dead_code)]
 fn expand_tilde(path: &str) -> PathBuf {
     if path.starts_with("~/") {
         if let Ok(home) = std::env::var("HOME") {

@@ -169,7 +169,11 @@ pub fn test_hidden_flag() {
     assert!(output.contains("┌─┴ test_dir_hidden_entries"));
 
     // Check that adding the '--ignore-hidden' flag causes us to not see hidden files
-    let output = build_command(vec!["-c", "--ignore-hidden", "tests/test_dir_hidden_entries/"]);
+    let output = build_command(vec![
+        "-c",
+        "--ignore-hidden",
+        "tests/test_dir_hidden_entries/",
+    ]);
     assert!(!output.contains(".hidden_file"));
     assert!(output.contains("┌── test_dir_hidden_entries"));
 }

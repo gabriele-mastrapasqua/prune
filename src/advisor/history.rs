@@ -15,8 +15,7 @@ pub struct ScanResult {
 }
 
 pub fn get_history_path() -> PathBuf {
-    let data_dir = dirs::data_local_dir()
-        .unwrap_or_else(|| PathBuf::from("/tmp"));
+    let data_dir = dirs::data_local_dir().unwrap_or_else(|| PathBuf::from("/tmp"));
     data_dir.join("prune").join("history.json")
 }
 

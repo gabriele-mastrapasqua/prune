@@ -58,9 +58,9 @@ pub fn build_node(
             || is_filtered_out_due_to_invert_regex(walk_data.invert_filter_regex, &dir)
             || by_filecount && !is_file
             || [
-                (&walk_data.filter_modified_time, data.2.0),
-                (&walk_data.filter_accessed_time, data.2.1),
-                (&walk_data.filter_changed_time, data.2.2),
+                (&walk_data.filter_modified_time, data.2 .0),
+                (&walk_data.filter_accessed_time, data.2 .1),
+                (&walk_data.filter_changed_time, data.2 .2),
             ]
             .iter()
             .any(|(filter_time, actual_time)| {
@@ -71,9 +71,9 @@ pub fn build_node(
             1
         } else if by_filetime.is_some() {
             match by_filetime {
-                Some(FileTime::Modified) => data.2.0.unsigned_abs(),
-                Some(FileTime::Accessed) => data.2.1.unsigned_abs(),
-                Some(FileTime::Changed) => data.2.2.unsigned_abs(),
+                Some(FileTime::Modified) => data.2 .0.unsigned_abs(),
+                Some(FileTime::Accessed) => data.2 .1.unsigned_abs(),
+                Some(FileTime::Changed) => data.2 .2.unsigned_abs(),
                 None => unreachable!(),
             }
         } else {

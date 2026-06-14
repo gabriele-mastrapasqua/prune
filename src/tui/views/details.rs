@@ -14,7 +14,7 @@ pub fn render(f: &mut Frame, app: &App, idx: usize) {
         .direction(Direction::Vertical)
         .margin(2)
         .constraints([
-            Constraint::Length(3),  // title
+            Constraint::Length(3), // title
             Constraint::Min(15),   // content
             Constraint::Length(3), // footer
         ])
@@ -22,9 +22,17 @@ pub fn render(f: &mut Frame, app: &App, idx: usize) {
 
     // Title
     let title = Paragraph::new("📋 Recommendation Details")
-        .style(Style::default().fg(Color::Cyan).add_modifier(Modifier::BOLD))
+        .style(
+            Style::default()
+                .fg(Color::Cyan)
+                .add_modifier(Modifier::BOLD),
+        )
         .alignment(Alignment::Center)
-        .block(Block::default().borders(Borders::BOTTOM).border_style(Style::default().fg(Color::DarkGray)));
+        .block(
+            Block::default()
+                .borders(Borders::BOTTOM)
+                .border_style(Style::default().fg(Color::DarkGray)),
+        );
     f.render_widget(title, chunks[0]);
 
     // Content
@@ -49,22 +57,45 @@ pub fn render(f: &mut Frame, app: &App, idx: usize) {
 
         let mut lines = vec![
             Line::from(vec![
-                Span::styled("Path: ", Style::default().fg(Color::Yellow).add_modifier(Modifier::BOLD)),
+                Span::styled(
+                    "Path: ",
+                    Style::default()
+                        .fg(Color::Yellow)
+                        .add_modifier(Modifier::BOLD),
+                ),
                 Span::raw(&rec.path),
             ]),
             Line::from(""),
             Line::from(vec![
-                Span::styled("Size: ", Style::default().fg(Color::Yellow).add_modifier(Modifier::BOLD)),
-                Span::styled(crate::advisor::models::human_bytes(rec.size), Style::default().fg(Color::Cyan)),
+                Span::styled(
+                    "Size: ",
+                    Style::default()
+                        .fg(Color::Yellow)
+                        .add_modifier(Modifier::BOLD),
+                ),
+                Span::styled(
+                    crate::advisor::models::human_bytes(rec.size),
+                    Style::default().fg(Color::Cyan),
+                ),
             ]),
             Line::from(""),
             Line::from(vec![
-                Span::styled("Risk: ", Style::default().fg(Color::Yellow).add_modifier(Modifier::BOLD)),
+                Span::styled(
+                    "Risk: ",
+                    Style::default()
+                        .fg(Color::Yellow)
+                        .add_modifier(Modifier::BOLD),
+                ),
                 Span::styled(risk_text, risk_style),
             ]),
             Line::from(""),
             Line::from(vec![
-                Span::styled("Category: ", Style::default().fg(Color::Yellow).add_modifier(Modifier::BOLD)),
+                Span::styled(
+                    "Category: ",
+                    Style::default()
+                        .fg(Color::Yellow)
+                        .add_modifier(Modifier::BOLD),
+                ),
                 Span::raw(format!("{:?}", rec.category)),
             ]),
         ];
@@ -72,30 +103,44 @@ pub fn render(f: &mut Frame, app: &App, idx: usize) {
         if let Some(days) = rec.last_accessed_days {
             lines.push(Line::from(""));
             lines.push(Line::from(vec![
-                Span::styled("Last accessed: ", Style::default().fg(Color::Yellow).add_modifier(Modifier::BOLD)),
+                Span::styled(
+                    "Last accessed: ",
+                    Style::default()
+                        .fg(Color::Yellow)
+                        .add_modifier(Modifier::BOLD),
+                ),
                 Span::raw(format!("{} days ago", days)),
             ]));
         }
 
         lines.push(Line::from(""));
-        lines.push(Line::from(vec![
-            Span::styled("Reason:", Style::default().fg(Color::Yellow).add_modifier(Modifier::BOLD)),
-        ]));
+        lines.push(Line::from(vec![Span::styled(
+            "Reason:",
+            Style::default()
+                .fg(Color::Yellow)
+                .add_modifier(Modifier::BOLD),
+        )]));
         lines.push(Line::from(format!("  {}", rec.reason)));
 
         lines.push(Line::from(""));
-        lines.push(Line::from(vec![
-            Span::styled("Suggested command:", Style::default().fg(Color::Yellow).add_modifier(Modifier::BOLD)),
-        ]));
-        lines.push(Line::from(vec![
-            Span::styled(format!("  {}", rec.suggested_command), Style::default().fg(Color::Green)),
-        ]));
+        lines.push(Line::from(vec![Span::styled(
+            "Suggested command:",
+            Style::default()
+                .fg(Color::Yellow)
+                .add_modifier(Modifier::BOLD),
+        )]));
+        lines.push(Line::from(vec![Span::styled(
+            format!("  {}", rec.suggested_command),
+            Style::default().fg(Color::Green),
+        )]));
 
         if is_selected {
             lines.push(Line::from(""));
             lines.push(Line::from(Span::styled(
                 "✓ Marked for deletion",
-                Style::default().fg(Color::Green).add_modifier(Modifier::BOLD),
+                Style::default()
+                    .fg(Color::Green)
+                    .add_modifier(Modifier::BOLD),
             )));
         }
 
@@ -120,6 +165,10 @@ pub fn render(f: &mut Frame, app: &App, idx: usize) {
         Span::raw(" back"),
     ]))
     .alignment(Alignment::Center)
-    .block(Block::default().borders(Borders::TOP).border_style(Style::default().fg(Color::DarkGray)));
+    .block(
+        Block::default()
+            .borders(Borders::TOP)
+            .border_style(Style::default().fg(Color::DarkGray)),
+    );
     f.render_widget(footer, chunks[2]);
 }

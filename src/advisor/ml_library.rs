@@ -31,7 +31,8 @@ fn scan_huggingface_models(home: &Path, min_size: u64) -> Vec<Recommendation> {
                 continue;
             }
 
-            let dir_name = path.file_name()
+            let dir_name = path
+                .file_name()
                 .and_then(|n| n.to_str())
                 .unwrap_or("")
                 .to_string();
@@ -60,15 +61,32 @@ fn scan_huggingface_models(home: &Path, min_size: u64) -> Vec<Recommendation> {
                 let (risk, reason) = match days {
                     Some(d) if d > 180 => (
                         Risk::Safe,
-                        format!("HuggingFace {} '{}': {} (not accessed in {} days)", category_label, model_name, human_bytes(total), d),
+                        format!(
+                            "HuggingFace {} '{}': {} (not accessed in {} days)",
+                            category_label,
+                            model_name,
+                            human_bytes(total),
+                            d
+                        ),
                     ),
                     Some(d) if d > 90 => (
                         Risk::Low,
-                        format!("HuggingFace {} '{}': {} (not accessed in {} days)", category_label, model_name, human_bytes(total), d),
+                        format!(
+                            "HuggingFace {} '{}': {} (not accessed in {} days)",
+                            category_label,
+                            model_name,
+                            human_bytes(total),
+                            d
+                        ),
                     ),
                     _ => (
                         Risk::Medium,
-                        format!("HuggingFace {} '{}': {}", category_label, model_name, human_bytes(total)),
+                        format!(
+                            "HuggingFace {} '{}': {}",
+                            category_label,
+                            model_name,
+                            human_bytes(total)
+                        ),
                     ),
                 };
 
@@ -95,7 +113,8 @@ fn scan_cuda_toolkit(min_size: u64) -> Vec<Recommendation> {
     if let Ok(entries) = std::fs::read_dir("/usr/local") {
         for entry in entries.flatten() {
             let path = entry.path();
-            let name = path.file_name()
+            let name = path
+                .file_name()
                 .and_then(|n| n.to_str())
                 .unwrap_or("")
                 .to_string();
@@ -109,7 +128,11 @@ fn scan_cuda_toolkit(min_size: u64) -> Vec<Recommendation> {
                             path: path.display().to_string(),
                             size: total,
                             risk: Risk::Review,
-                            reason: format!("CUDA Toolkit {}: {} (not needed on Mac)", version, human_bytes(total)),
+                            reason: format!(
+                                "CUDA Toolkit {}: {} (not needed on Mac)",
+                                version,
+                                human_bytes(total)
+                            ),
                             suggested_command: format!("sudo rm -rf '{}'", path.display()),
                             last_accessed_days: get_last_accessed_days(&path),
                         });

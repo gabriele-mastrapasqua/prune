@@ -13,7 +13,7 @@ pub fn render(f: &mut Frame, app: &App) {
         .direction(Direction::Vertical)
         .margin(2)
         .constraints([
-            Constraint::Length(3),  // title
+            Constraint::Length(3), // title
             Constraint::Min(10),   // menu
             Constraint::Length(3), // footer
         ])
@@ -21,9 +21,17 @@ pub fn render(f: &mut Frame, app: &App) {
 
     // Title
     let title = Paragraph::new("🧹 MACCLEAN - Disk Cleanup Advisor")
-        .style(Style::default().fg(Color::Cyan).add_modifier(Modifier::BOLD))
+        .style(
+            Style::default()
+                .fg(Color::Cyan)
+                .add_modifier(Modifier::BOLD),
+        )
         .alignment(Alignment::Center)
-        .block(Block::default().borders(Borders::BOTTOM).border_style(Style::default().fg(Color::DarkGray)));
+        .block(
+            Block::default()
+                .borders(Borders::BOTTOM)
+                .border_style(Style::default().fg(Color::DarkGray)),
+        );
     f.render_widget(title, chunks[0]);
 
     // Menu items
@@ -54,7 +62,11 @@ pub fn render(f: &mut Frame, app: &App) {
         Block::default()
             .borders(Borders::ALL)
             .title(" Main Menu ")
-            .title_style(Style::default().fg(Color::Cyan).add_modifier(Modifier::BOLD)),
+            .title_style(
+                Style::default()
+                    .fg(Color::Cyan)
+                    .add_modifier(Modifier::BOLD),
+            ),
     );
     f.render_widget(menu, chunks[1]);
 
@@ -68,6 +80,10 @@ pub fn render(f: &mut Frame, app: &App) {
         Span::raw(" quit"),
     ]))
     .alignment(Alignment::Center)
-    .block(Block::default().borders(Borders::TOP).border_style(Style::default().fg(Color::DarkGray)));
+    .block(
+        Block::default()
+            .borders(Borders::TOP)
+            .border_style(Style::default().fg(Color::DarkGray)),
+    );
     f.render_widget(footer, chunks[2]);
 }

@@ -1,3 +1,4 @@
+mod advisor;
 mod cli;
 mod config;
 mod dir_walker;
@@ -8,9 +9,8 @@ mod filter_type;
 mod node;
 mod platform;
 mod progress;
-mod utils;
-mod advisor;
 mod tui;
+mod utils;
 
 use crate::cli::Cli;
 use crate::config::Config;
@@ -35,18 +35,18 @@ use sysinfo::System;
 use utils::canonicalize_absolute_path;
 
 use self::display::draw_it;
+use advisor::models::{Category, Risk};
+use advisor::report;
+use advisor::scanner::AdvisorEngine;
 use config::get_config;
 use dir_walker::walk_it;
 use display_node::OUTPUT_TYPE;
 use filter::get_biggest;
-use advisor::scanner::AdvisorEngine;
-use advisor::report;
-use advisor::models::{Category, Risk};
 use filter_type::get_all_file_types;
 use regex::Regex;
 use std::cmp::max;
 use std::path::PathBuf;
-use terminal_size::{Height, Width, terminal_size};
+use terminal_size::{terminal_size, Height, Width};
 use utils::get_filesystem_devices;
 use utils::simplify_dir_names;
 
@@ -516,11 +516,20 @@ fn build_thread_pool(
 fn parse_size(s: &str) -> Option<u64> {
     let s = s.trim().to_uppercase();
     let (num_part, multiplier) = if s.ends_with("TB") || s.ends_with("T") {
-        (s.trim_end_matches(|c: char| c.is_alphabetic()), 1024u64 * 1024 * 1024 * 1024)
+        (
+            s.trim_end_matches(|c: char| c.is_alphabetic()),
+            1024u64 * 1024 * 1024 * 1024,
+        )
     } else if s.ends_with("GB") || s.ends_with("G") {
-        (s.trim_end_matches(|c: char| c.is_alphabetic()), 1024u64 * 1024 * 1024)
+        (
+            s.trim_end_matches(|c: char| c.is_alphabetic()),
+            1024u64 * 1024 * 1024,
+        )
     } else if s.ends_with("MB") || s.ends_with("M") {
-        (s.trim_end_matches(|c: char| c.is_alphabetic()), 1024u64 * 1024)
+        (
+            s.trim_end_matches(|c: char| c.is_alphabetic()),
+            1024u64 * 1024,
+        )
     } else if s.ends_with("KB") || s.ends_with("K") {
         (s.trim_end_matches(|c: char| c.is_alphabetic()), 1024u64)
     } else if s.ends_with("B") {
@@ -571,9 +580,10 @@ fn run_advisor(options: &Cli) {
         .map(parse_risk)
         .unwrap_or(Risk::Review);
 
-    let categories = options.category.as_deref().and_then(|c| {
-        parse_category(c).map(|cat| vec![cat])
-    });
+    let categories = options
+        .category
+        .as_deref()
+        .and_then(|c| parse_category(c).map(|cat| vec![cat]));
 
     let older_than = options.params.as_ref().and_then(|params| {
         for p in params {
@@ -600,9 +610,7 @@ fn run_advisor(options: &Cli) {
     // Save scan result to history
     advisor::history::save_scan_result(&recommendations);
 
-    let output = if options.json
-        || options.output_json
-        || options.format.as_deref() == Some("json")
+    let output = if options.json || options.output_json || options.format.as_deref() == Some("json")
     {
         report::format_json(&recommendations)
     } else {

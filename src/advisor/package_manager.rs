@@ -155,7 +155,8 @@ fn check_uv_tools(home: &Path, min_size: u64) -> Vec<Recommendation> {
                 continue;
             }
 
-            let tool_name = path.file_name()
+            let tool_name = path
+                .file_name()
                 .and_then(|n| n.to_str())
                 .unwrap_or("")
                 .to_string();

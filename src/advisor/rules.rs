@@ -46,7 +46,9 @@ fn scan_dead_simulators(base: &std::path::Path, recs: &mut Vec<Recommendation>) 
         Err(_) => return,
     };
     for entry in entries.flatten() {
-        let dead_path = entry.path().join("data/Library/Caches/com.apple.containermanagerd/Dead");
+        let dead_path = entry
+            .path()
+            .join("data/Library/Caches/com.apple.containermanagerd/Dead");
         if dead_path.exists() && dead_path.is_dir() {
             if let Ok(total) = dir_size(&dead_path) {
                 if total > 50 * 1024 * 1024 {
@@ -98,7 +100,8 @@ fn scan_xcode_device_support(base: &std::path::Path, recs: &mut Vec<Recommendati
                 size: total,
                 risk: Risk::Safe,
                 reason: format!("iOS DeviceSupport: {}", human_bytes(total)),
-                suggested_command: "rm -rf ~/Library/Developer/Xcode/iOS\\ DeviceSupport/*".to_string(),
+                suggested_command: "rm -rf ~/Library/Developer/Xcode/iOS\\ DeviceSupport/*"
+                    .to_string(),
                 last_accessed_days: None,
             });
         }
@@ -111,7 +114,7 @@ fn scan_xcode_archives(base: &std::path::Path, recs: &mut Vec<Recommendation>) {
         return;
     }
     if let Ok(total) = dir_size(&archives) {
-        if total > 1 * 1024 * 1024 * 1024 {
+        if total > 1024 * 1024 * 1024 {
             recs.push(Recommendation {
                 category: Category::Dev(DevKind::Xcode),
                 path: archives.display().to_string(),
@@ -138,7 +141,10 @@ fn scan_docker(paths: &PlatformPaths, recs: &mut Vec<Recommendation>) {
                             path: docker_path.display().to_string(),
                             size: meta.len(),
                             risk: Risk::Medium,
-                            reason: format!("Docker Desktop disk image: {}", human_bytes(meta.len())),
+                            reason: format!(
+                                "Docker Desktop disk image: {}",
+                                human_bytes(meta.len())
+                            ),
                             suggested_command: "docker system prune -af --volumes".to_string(),
                             last_accessed_days: None,
                         });
@@ -218,11 +224,15 @@ fn scan_downloads_installers(base: &std::path::Path, recs: &mut Vec<Recommendati
             Some((path, size)) => format!("\n       Largest: {} ({})", path, human_bytes(*size)),
             None => String::new(),
         };
-        
+
         let suggested_cmd = if cfg!(target_os = "windows") {
-            "dir /O-S \"%USERPROFILE%\\Downloads\\*.exe\" \"%USERPROFILE%\\Downloads\\*.msi\"".to_string()
+            "dir /O-S \"%USERPROFILE%\\Downloads\\*.exe\" \"%USERPROFILE%\\Downloads\\*.msi\""
+                .to_string()
         } else {
-            format!("ls -lhS ~/Downloads/*.{{{}}} 2>/dev/null", installer_extensions.join(","))
+            format!(
+                "ls -lhS ~/Downloads/*.{{{}}} 2>/dev/null",
+                installer_extensions.join(",")
+            )
         };
 
         recs.push(Recommendation {

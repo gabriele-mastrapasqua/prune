@@ -5,10 +5,10 @@ use std::sync::Arc;
 use std::sync::Mutex;
 
 use crate::node::Node;
-use crate::progress::ORDERING;
 use crate::progress::Operation;
 use crate::progress::PAtomicInfo;
 use crate::progress::RuntimeErrors;
+use crate::progress::ORDERING;
 use crate::utils::is_filtered_out_due_to_file_time;
 use crate::utils::is_filtered_out_due_to_invert_regex;
 use crate::utils::is_filtered_out_due_to_regex;
@@ -241,7 +241,9 @@ fn walk(dir: PathBuf, walk_data: &WalkData, depth: usize) -> Option<Node> {
 
                                         prog_data.num_files.fetch_add(1, ORDERING);
                                         if let Some(ref file) = node {
-                                            prog_data.total_file_size.fetch_add(file.size, ORDERING);
+                                            prog_data
+                                                .total_file_size
+                                                .fetch_add(file.size, ORDERING);
                                         }
 
                                         return node;

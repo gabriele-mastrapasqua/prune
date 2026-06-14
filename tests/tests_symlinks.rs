@@ -1,4 +1,4 @@
-use assert_cmd::{Command, cargo_bin_cmd};
+use assert_cmd::{cargo_bin_cmd, Command};
 use std::fs::File;
 use std::io::Write;
 use std::path::PathBuf;

@@ -3,6 +3,7 @@ use crate::advisor::models::*;
 /// Known macOS paths that commonly accumulate unnecessary data.
 /// Each entry is checked by the advisor engine: if the path exists and exceeds
 /// min_size, a recommendation is generated.
+#[allow(dead_code)]
 pub const KNOWN_PATHS: &[KnownPath] = &[
     // ── Caches ──────────────────────────────────────────
     KnownPath {
@@ -61,7 +62,6 @@ pub const KNOWN_PATHS: &[KnownPath] = &[
         description: "Application logs",
         suggested_command: "rm -rf ~/Library/Logs/*",
     },
-
     // ── Package Manager Caches ──────────────────────────
     KnownPath {
         path: "~/.npm/_cacache",
@@ -162,7 +162,6 @@ pub const KNOWN_PATHS: &[KnownPath] = &[
         description: "Dart pub cache",
         suggested_command: "dart pub cache clean",
     },
-
     // ── AI / ML Models ─────────────────────────────────
     KnownPath {
         path: "~/.ollama/models",
@@ -206,7 +205,6 @@ pub const KNOWN_PATHS: &[KnownPath] = &[
         description: "GPT4All models",
         suggested_command: "rm -rf ~/.cache/gpt4all/*",
     },
-
     // ── IDE / Editor Caches ────────────────────────────
     KnownPath {
         path: "~/.vscode/extensions",
@@ -222,7 +220,6 @@ pub const KNOWN_PATHS: &[KnownPath] = &[
         description: "Cursor cache",
         suggested_command: "rm -rf ~/.cursor/Cache/*",
     },
-
     // ── Version Managers ───────────────────────────────
     KnownPath {
         path: "~/.rustup/toolchains",

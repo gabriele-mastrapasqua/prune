@@ -50,6 +50,7 @@ pub struct Recommendation {
 }
 
 #[derive(Debug, Clone)]
+#[allow(dead_code)]
 pub struct KnownPath {
     pub path: &'static str,
     pub category: Category,

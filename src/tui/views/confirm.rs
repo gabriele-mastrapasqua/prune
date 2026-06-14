@@ -13,7 +13,7 @@ pub fn render(f: &mut Frame, app: &App) {
         .direction(Direction::Vertical)
         .margin(2)
         .constraints([
-            Constraint::Length(3),  // title
+            Constraint::Length(3), // title
             Constraint::Min(10),   // content
             Constraint::Length(3), // footer
         ])
@@ -23,7 +23,11 @@ pub fn render(f: &mut Frame, app: &App) {
     let title = Paragraph::new("⚠️  Confirm Deletion")
         .style(Style::default().fg(Color::Red).add_modifier(Modifier::BOLD))
         .alignment(Alignment::Center)
-        .block(Block::default().borders(Borders::BOTTOM).border_style(Style::default().fg(Color::DarkGray)));
+        .block(
+            Block::default()
+                .borders(Borders::BOTTOM)
+                .border_style(Style::default().fg(Color::DarkGray)),
+        );
     f.render_widget(title, chunks[0]);
 
     // Content
@@ -33,13 +37,31 @@ pub fn render(f: &mut Frame, app: &App) {
     let mut lines = vec![
         Line::from(""),
         Line::from(vec![
-            Span::styled("You are about to delete ", Style::default().fg(Color::White)),
-            Span::styled(format!("{} items", selected_count), Style::default().fg(Color::Yellow).add_modifier(Modifier::BOLD)),
+            Span::styled(
+                "You are about to delete ",
+                Style::default().fg(Color::White),
+            ),
+            Span::styled(
+                format!("{} items", selected_count),
+                Style::default()
+                    .fg(Color::Yellow)
+                    .add_modifier(Modifier::BOLD),
+            ),
             Span::styled(" totaling ", Style::default().fg(Color::White)),
-            Span::styled(crate::advisor::models::human_bytes(selected_size), Style::default().fg(Color::Cyan).add_modifier(Modifier::BOLD)),
+            Span::styled(
+                crate::advisor::models::human_bytes(selected_size),
+                Style::default()
+                    .fg(Color::Cyan)
+                    .add_modifier(Modifier::BOLD),
+            ),
         ]),
         Line::from(""),
-        Line::from(Span::styled("Items to delete:", Style::default().fg(Color::Yellow).add_modifier(Modifier::BOLD))),
+        Line::from(Span::styled(
+            "Items to delete:",
+            Style::default()
+                .fg(Color::Yellow)
+                .add_modifier(Modifier::BOLD),
+        )),
         Line::from(""),
     ];
 
@@ -48,7 +70,10 @@ pub fn render(f: &mut Frame, app: &App) {
 
     for (i, &idx) in indices.iter().enumerate() {
         if i >= 10 {
-            lines.push(Line::from(format!("  ... and {} more", selected_count - 10)));
+            lines.push(Line::from(format!(
+                "  ... and {} more",
+                selected_count - 10
+            )));
             break;
         }
         if let Some(rec) = app.recommendations.get(idx) {
@@ -61,7 +86,10 @@ pub fn render(f: &mut Frame, app: &App) {
                 Span::raw("  • "),
                 Span::styled(path_short, Style::default().fg(Color::White)),
                 Span::raw(" ("),
-                Span::styled(crate::advisor::models::human_bytes(rec.size), Style::default().fg(Color::Cyan)),
+                Span::styled(
+                    crate::advisor::models::human_bytes(rec.size),
+                    Style::default().fg(Color::Cyan),
+                ),
                 Span::raw(")"),
             ]));
         }
@@ -85,13 +113,25 @@ pub fn render(f: &mut Frame, app: &App) {
 
     // Footer
     let footer = Paragraph::new(Line::from(vec![
-        Span::styled("y", Style::default().fg(Color::Green).add_modifier(Modifier::BOLD)),
+        Span::styled(
+            "y",
+            Style::default()
+                .fg(Color::Green)
+                .add_modifier(Modifier::BOLD),
+        ),
         Span::styled(" YES, delete", Style::default().fg(Color::Green)),
         Span::raw("  |  "),
-        Span::styled("n", Style::default().fg(Color::Red).add_modifier(Modifier::BOLD)),
+        Span::styled(
+            "n",
+            Style::default().fg(Color::Red).add_modifier(Modifier::BOLD),
+        ),
         Span::styled(" NO, cancel", Style::default().fg(Color::Red)),
     ]))
     .alignment(Alignment::Center)
-    .block(Block::default().borders(Borders::TOP).border_style(Style::default().fg(Color::DarkGray)));
+    .block(
+        Block::default()
+            .borders(Borders::TOP)
+            .border_style(Style::default().fg(Color::DarkGray)),
+    );
     f.render_widget(footer, chunks[2]);
 }

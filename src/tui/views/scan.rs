@@ -13,7 +13,7 @@ pub fn render(f: &mut Frame, app: &App) {
         .direction(Direction::Vertical)
         .margin(2)
         .constraints([
-            Constraint::Length(3),  // title
+            Constraint::Length(3), // title
             Constraint::Min(10),   // content
             Constraint::Length(3), // footer
         ])
@@ -21,9 +21,17 @@ pub fn render(f: &mut Frame, app: &App) {
 
     // Title
     let title = Paragraph::new("🔍 Scanning...")
-        .style(Style::default().fg(Color::Yellow).add_modifier(Modifier::BOLD))
+        .style(
+            Style::default()
+                .fg(Color::Yellow)
+                .add_modifier(Modifier::BOLD),
+        )
         .alignment(Alignment::Center)
-        .block(Block::default().borders(Borders::BOTTOM).border_style(Style::default().fg(Color::DarkGray)));
+        .block(
+            Block::default()
+                .borders(Borders::BOTTOM)
+                .border_style(Style::default().fg(Color::DarkGray)),
+        );
     f.render_widget(title, chunks[0]);
 
     // Content
@@ -31,8 +39,8 @@ pub fn render(f: &mut Frame, app: &App) {
         .direction(Direction::Vertical)
         .margin(2)
         .constraints([
-            Constraint::Length(3),  // progress bar
-            Constraint::Length(3),  // status
+            Constraint::Length(3), // progress bar
+            Constraint::Length(3), // status
             Constraint::Min(0),    // info
         ])
         .split(chunks[1]);
@@ -68,7 +76,7 @@ pub fn render(f: &mut Frame, app: &App) {
         ]),
         Line::from(vec![
             Span::styled("Min size: ", Style::default().fg(Color::Yellow)),
-            Span::raw(format!("{}", crate::advisor::models::human_bytes(app.min_size))),
+            Span::raw(crate::advisor::models::human_bytes(app.min_size)),
         ]),
         Line::from(vec![
             Span::styled("Risk limit: ", Style::default().fg(Color::Yellow)),
@@ -77,7 +85,11 @@ pub fn render(f: &mut Frame, app: &App) {
     ];
 
     let info = Paragraph::new(info_text)
-        .block(Block::default().borders(Borders::ALL).title(" Scan Options "))
+        .block(
+            Block::default()
+                .borders(Borders::ALL)
+                .title(" Scan Options "),
+        )
         .alignment(Alignment::Left);
     f.render_widget(info, content_chunks[2]);
 
@@ -87,6 +99,10 @@ pub fn render(f: &mut Frame, app: &App) {
         Span::raw(" cancel"),
     ]))
     .alignment(Alignment::Center)
-    .block(Block::default().borders(Borders::TOP).border_style(Style::default().fg(Color::DarkGray)));
+    .block(
+        Block::default()
+            .borders(Borders::TOP)
+            .border_style(Style::default().fg(Color::DarkGray)),
+    );
     f.render_widget(footer, chunks[2]);
 }

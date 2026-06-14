@@ -33,7 +33,8 @@ fn scan_nvm(home: &Path, min_size: u64) -> Vec<Recommendation> {
         for entry in entries.flatten() {
             let path = entry.path();
             if path.is_dir() {
-                let version = path.file_name()
+                let version = path
+                    .file_name()
                     .and_then(|n| n.to_str())
                     .unwrap_or("")
                     .to_string();
@@ -61,7 +62,10 @@ fn scan_nvm(home: &Path, min_size: u64) -> Vec<Recommendation> {
             let (risk, reason) = if is_current {
                 (Risk::Low, format!("Node.js {} (current default)", version))
             } else if is_deprecated {
-                (Risk::Safe, format!("Node.js {} is EOL (End of Life)", version))
+                (
+                    Risk::Safe,
+                    format!("Node.js {} is EOL (End of Life)", version),
+                )
             } else {
                 (Risk::Low, format!("Node.js {} (not current)", version))
             };
@@ -87,7 +91,10 @@ fn scan_nvm(home: &Path, min_size: u64) -> Vec<Recommendation> {
     recs
 }
 
-fn resolve_nvm_current_version(alias: &Option<String>, versions: &[(String, std::path::PathBuf)]) -> Option<String> {
+fn resolve_nvm_current_version(
+    alias: &Option<String>,
+    versions: &[(String, std::path::PathBuf)],
+) -> Option<String> {
     let alias = alias.as_ref()?;
 
     // If alias is a full version like "v20.20.2" or "20.20.2"
@@ -109,7 +116,11 @@ fn resolve_nvm_current_version(alias: &Option<String>, versions: &[(String, std:
             .iter()
             .filter(|(v, _)| {
                 let cleaned = v.trim_start_matches('v');
-                cleaned.split('.').next().and_then(|s| s.parse::<u32>().ok()) == Some(major)
+                cleaned
+                    .split('.')
+                    .next()
+                    .and_then(|s| s.parse::<u32>().ok())
+                    == Some(major)
             })
             .map(|(v, _)| v.as_str())
             .collect();
@@ -129,10 +140,7 @@ fn resolve_nvm_current_version(alias: &Option<String>, versions: &[(String, std:
 
 fn parse_semver(version: &str) -> (u32, u32, u32) {
     let cleaned = version.trim_start_matches('v');
-    let parts: Vec<u32> = cleaned
-        .split('.')
-        .filter_map(|s| s.parse().ok())
-        .collect();
+    let parts: Vec<u32> = cleaned.split('.').filter_map(|s| s.parse().ok()).collect();
     (
         parts.first().copied().unwrap_or(0),
         parts.get(1).copied().unwrap_or(0),
@@ -166,17 +174,22 @@ fn scan_fnm(home: &Path, min_size: u64) -> Vec<Recommendation> {
                 continue;
             }
 
-            let version = path.file_name()
+            let version = path
+                .file_name()
                 .and_then(|n| n.to_str())
                 .unwrap_or("")
                 .to_string();
 
-            let is_current = current_version.as_ref().map_or(false, |cv| {
-                version.contains(cv)
-            });
+            let is_current = current_version
+                .as_ref()
+                .map_or(false, |cv| version.contains(cv));
 
             let install_dir = path.join("installation");
-            let scan_path = if install_dir.exists() { &install_dir } else { &path };
+            let scan_path = if install_dir.exists() {
+                &install_dir
+            } else {
+                &path
+            };
 
             if let Ok(total) = dir_size(scan_path) {
                 if total < min_size {
@@ -247,7 +260,8 @@ fn scan_volta(home: &Path, min_size: u64) -> Vec<Recommendation> {
                 continue;
             }
 
-            let version = path.file_name()
+            let version = path
+                .file_name()
                 .and_then(|n| n.to_str())
                 .unwrap_or("")
                 .to_string();
@@ -300,7 +314,8 @@ fn scan_pyenv(home: &Path, min_size: u64) -> Vec<Recommendation> {
                 continue;
             }
 
-            let version = path.file_name()
+            let version = path
+                .file_name()
                 .and_then(|n| n.to_str())
                 .unwrap_or("")
                 .to_string();
@@ -321,12 +336,21 @@ fn scan_pyenv(home: &Path, min_size: u64) -> Vec<Recommendation> {
                     if ml_info.is_empty() {
                         (Risk::Low, format!("Python {} (pyenv current)", version))
                     } else {
-                        (Risk::Medium, format!("Python {} (current) with ML libs: {}", version, ml_info))
+                        (
+                            Risk::Medium,
+                            format!("Python {} (current) with ML libs: {}", version, ml_info),
+                        )
                     }
                 } else if !ml_info.is_empty() {
-                    (Risk::Low, format!("Python {} (not current) with ML libs: {}", version, ml_info))
+                    (
+                        Risk::Low,
+                        format!("Python {} (not current) with ML libs: {}", version, ml_info),
+                    )
                 } else {
-                    (Risk::Safe, format!("Python {} (not current, no ML libs)", version))
+                    (
+                        Risk::Safe,
+                        format!("Python {} (not current, no ML libs)", version),
+                    )
                 };
 
                 let cmd = if is_current {
@@ -363,8 +387,13 @@ fn get_pyenv_default_version(home: &Path) -> Option<String> {
 
 fn check_python_ml_libs(python_dir: &Path) -> String {
     let ml_libs = [
-        "torch", "tensorflow", "transformers", "jax",
-        "diffusers", "onnxruntime", "sentencepiece",
+        "torch",
+        "tensorflow",
+        "transformers",
+        "jax",
+        "diffusers",
+        "onnxruntime",
+        "sentencepiece",
     ];
 
     // Find site-packages directory
@@ -381,7 +410,8 @@ fn check_python_ml_libs(python_dir: &Path) -> String {
             if !entry_path.is_dir() {
                 continue;
             }
-            let dir_name = entry_path.file_name()
+            let dir_name = entry_path
+                .file_name()
                 .and_then(|n| n.to_str())
                 .unwrap_or("");
 
@@ -393,7 +423,11 @@ fn check_python_ml_libs(python_dir: &Path) -> String {
                         if lib_path.exists() {
                             if let Ok(size) = dir_size(&lib_path) {
                                 if size > 10 * 1024 * 1024 {
-                                    found_libs.push(format!("{} ({})", lib_name, human_bytes(size)));
+                                    found_libs.push(format!(
+                                        "{} ({})",
+                                        lib_name,
+                                        human_bytes(size)
+                                    ));
                                 }
                             }
                         }
@@ -419,7 +453,8 @@ fn scan_conda(home: &Path, min_size: u64) -> Vec<Recommendation> {
                     continue;
                 }
 
-                let env_name = path.file_name()
+                let env_name = path
+                    .file_name()
                     .and_then(|n| n.to_str())
                     .unwrap_or("")
                     .to_string();
@@ -482,7 +517,8 @@ fn scan_rustup(home: &Path, min_size: u64) -> Vec<Recommendation> {
                 continue;
             }
 
-            let toolchain = path.file_name()
+            let toolchain = path
+                .file_name()
                 .and_then(|n| n.to_str())
                 .unwrap_or("")
                 .to_string();
@@ -495,9 +531,15 @@ fn scan_rustup(home: &Path, min_size: u64) -> Vec<Recommendation> {
                 }
 
                 let (risk, reason) = if is_default {
-                    (Risk::Low, format!("Rust toolchain: {} (default)", toolchain))
+                    (
+                        Risk::Low,
+                        format!("Rust toolchain: {} (default)", toolchain),
+                    )
                 } else {
-                    (Risk::Safe, format!("Rust toolchain: {} (not default)", toolchain))
+                    (
+                        Risk::Safe,
+                        format!("Rust toolchain: {} (not default)", toolchain),
+                    )
                 };
 
                 let cmd = if is_default {
@@ -547,8 +589,8 @@ fn extract_major_version(version: &str) -> Option<u32> {
 
 fn is_node_deprecated(major: Option<u32>) -> bool {
     match major {
-        Some(v) if v < 18 => true,   // Node < 18 is EOL
-        Some(18) => true,            // Node 18 EOL since 2025-04
+        Some(v) if v < 18 => true, // Node < 18 is EOL
+        Some(18) => true,          // Node 18 EOL since 2025-04
         _ => false,
     }
 }

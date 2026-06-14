@@ -1,16 +1,16 @@
 pub mod app;
 pub mod views;
 
-use std::io;
 use crossterm::{
     event::{self, DisableMouseCapture, EnableMouseCapture, Event, KeyCode, KeyEventKind},
     execute,
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
 use ratatui::{backend::CrosstermBackend, Terminal};
+use std::io;
 
-use crate::advisor::scanner::AdvisorEngine;
 use crate::advisor::models::{Category, Risk};
+use crate::advisor::scanner::AdvisorEngine;
 use app::{App, AppMode};
 
 pub fn run(dev_mode: bool, min_size: Option<&str>, risk_limit: Option<&str>) -> io::Result<()> {
@@ -22,13 +22,9 @@ pub fn run(dev_mode: bool, min_size: Option<&str>, risk_limit: Option<&str>) -> 
     let mut terminal = Terminal::new(backend)?;
 
     // Parse options
-    let min_size_bytes = min_size
-        .and_then(parse_size)
-        .unwrap_or(100 * 1024 * 1024); // default 100 MB
+    let min_size_bytes = min_size.and_then(parse_size).unwrap_or(100 * 1024 * 1024); // default 100 MB
 
-    let risk = risk_limit
-        .map(parse_risk)
-        .unwrap_or(Risk::Review);
+    let risk = risk_limit.map(parse_risk).unwrap_or(Risk::Review);
 
     // Create app
     let mut app = App::new(dev_mode, min_size_bytes, risk);
@@ -53,21 +49,16 @@ pub fn run(dev_mode: bool, min_size: Option<&str>, risk_limit: Option<&str>) -> 
     result
 }
 
-fn run_app(
-    terminal: &mut Terminal<CrosstermBackend<io::Stdout>>,
-    app: &mut App,
-) -> io::Result<()> {
+fn run_app(terminal: &mut Terminal<CrosstermBackend<io::Stdout>>, app: &mut App) -> io::Result<()> {
     loop {
-        terminal.draw(|f| {
-            match app.mode {
-                AppMode::Menu => views::menu::render(f, app),
-                AppMode::Scanning => views::scan::render(f, app),
-                AppMode::Results => views::results::render(f, app),
-                AppMode::Details(idx) => views::details::render(f, app, idx),
-                AppMode::ConfirmDeletion => views::confirm::render(f, app),
-                AppMode::Help => views::help::render(f, app),
-                AppMode::Quit => {}
-            }
+        terminal.draw(|f| match app.mode {
+            AppMode::Menu => views::menu::render(f, app),
+            AppMode::Scanning => views::scan::render(f, app),
+            AppMode::Results => views::results::render(f, app),
+            AppMode::Details(idx) => views::details::render(f, app, idx),
+            AppMode::ConfirmDeletion => views::confirm::render(f, app),
+            AppMode::Help => views::help::render(f, app),
+            AppMode::Quit => {}
         })?;
 
         if matches!(app.mode, AppMode::Quit) {
@@ -293,11 +284,20 @@ fn execute_deletions(app: &App) {
 fn parse_size(s: &str) -> Option<u64> {
     let s = s.trim().to_uppercase();
     let (num_part, multiplier) = if s.ends_with("TB") || s.ends_with("T") {
-        (s.trim_end_matches(|c: char| c.is_alphabetic()), 1024u64 * 1024 * 1024 * 1024)
+        (
+            s.trim_end_matches(|c: char| c.is_alphabetic()),
+            1024u64 * 1024 * 1024 * 1024,
+        )
     } else if s.ends_with("GB") || s.ends_with("G") {
-        (s.trim_end_matches(|c: char| c.is_alphabetic()), 1024u64 * 1024 * 1024)
+        (
+            s.trim_end_matches(|c: char| c.is_alphabetic()),
+            1024u64 * 1024 * 1024,
+        )
     } else if s.ends_with("MB") || s.ends_with("M") {
-        (s.trim_end_matches(|c: char| c.is_alphabetic()), 1024u64 * 1024)
+        (
+            s.trim_end_matches(|c: char| c.is_alphabetic()),
+            1024u64 * 1024,
+        )
     } else if s.ends_with("KB") || s.ends_with("K") {
         (s.trim_end_matches(|c: char| c.is_alphabetic()), 1024u64)
     } else {

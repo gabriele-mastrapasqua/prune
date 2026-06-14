@@ -14,7 +14,7 @@ pub fn render(f: &mut Frame, app: &App) {
         .direction(Direction::Vertical)
         .margin(1)
         .constraints([
-            Constraint::Length(3),  // header
+            Constraint::Length(3), // header
             Constraint::Min(10),   // list
             Constraint::Length(3), // footer
         ])
@@ -26,20 +26,38 @@ pub fn render(f: &mut Frame, app: &App) {
     let selected_size = app.selected_size();
 
     let header_text = Line::from(vec![
-        Span::styled("📊 Scan Results", Style::default().fg(Color::Cyan).add_modifier(Modifier::BOLD)),
+        Span::styled(
+            "📊 Scan Results",
+            Style::default()
+                .fg(Color::Cyan)
+                .add_modifier(Modifier::BOLD),
+        ),
         Span::raw(" - "),
-        Span::styled(format!("{}", crate::advisor::models::human_bytes(total)), Style::default().fg(Color::Green)),
+        Span::styled(
+            crate::advisor::models::human_bytes(total),
+            Style::default().fg(Color::Green),
+        ),
         Span::raw(" recoverable"),
         Span::raw("  |  "),
-        Span::styled(format!("{} selected", selected), Style::default().fg(Color::Yellow)),
+        Span::styled(
+            format!("{} selected", selected),
+            Style::default().fg(Color::Yellow),
+        ),
         Span::raw(" ("),
-        Span::styled(format!("{}", crate::advisor::models::human_bytes(selected_size)), Style::default().fg(Color::Yellow)),
+        Span::styled(
+            crate::advisor::models::human_bytes(selected_size),
+            Style::default().fg(Color::Yellow),
+        ),
         Span::raw(")"),
     ]);
 
     let header = Paragraph::new(header_text)
         .alignment(Alignment::Left)
-        .block(Block::default().borders(Borders::BOTTOM).border_style(Style::default().fg(Color::DarkGray)));
+        .block(
+            Block::default()
+                .borders(Borders::BOTTOM)
+                .border_style(Style::default().fg(Color::DarkGray)),
+        );
     f.render_widget(header, chunks[0]);
 
     // Results list
@@ -60,7 +78,9 @@ pub fn render(f: &mut Frame, app: &App) {
             let risk_badge = match rec.risk {
                 Risk::Safe => Span::styled("✅ SAFE", Style::default().fg(Color::Green)),
                 Risk::Low => Span::styled("🟡 LOW", Style::default().fg(Color::Yellow)),
-                Risk::Medium => Span::styled("🟠 MED", Style::default().fg(Color::Rgb(255, 165, 0))),
+                Risk::Medium => {
+                    Span::styled("🟠 MED", Style::default().fg(Color::Rgb(255, 165, 0)))
+                }
                 Risk::Review => Span::styled("🔴 REV", Style::default().fg(Color::Red)),
                 Risk::Danger => Span::styled("⛔ DNG", Style::default().fg(Color::DarkGray)),
             };
@@ -81,7 +101,9 @@ pub fn render(f: &mut Frame, app: &App) {
             let size_str = crate::advisor::models::human_bytes(rec.size);
 
             let style = if is_current {
-                Style::default().bg(Color::DarkGray).add_modifier(Modifier::BOLD)
+                Style::default()
+                    .bg(Color::DarkGray)
+                    .add_modifier(Modifier::BOLD)
             } else {
                 Style::default()
             };
@@ -129,6 +151,10 @@ pub fn render(f: &mut Frame, app: &App) {
         Span::raw(" back"),
     ]))
     .alignment(Alignment::Center)
-    .block(Block::default().borders(Borders::TOP).border_style(Style::default().fg(Color::DarkGray)));
+    .block(
+        Block::default()
+            .borders(Borders::TOP)
+            .border_style(Style::default().fg(Color::DarkGray)),
+    );
     f.render_widget(footer, chunks[2]);
 }

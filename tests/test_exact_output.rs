@@ -1,4 +1,4 @@
-use assert_cmd::{Command, cargo_bin_cmd};
+use assert_cmd::{cargo_bin_cmd, Command};
 use std::ffi::OsStr;
 use std::process::Output;
 use std::sync::Once;
