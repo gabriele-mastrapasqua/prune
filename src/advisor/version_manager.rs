@@ -73,7 +73,11 @@ fn scan_nvm(home: &Path, min_size: u64) -> Vec<Recommendation> {
             let cmd = if is_current {
                 format!("# Keep this version (current default): {}", version)
             } else {
-                format!("nvm uninstall {}", version.trim_start_matches('v'))
+                let ver = version.trim_start_matches('v');
+                format!(
+                    "bash -c 'export NVM_DIR=\"$HOME/.nvm\" && [ -s \"$NVM_DIR/nvm.sh\" ] && . \"$NVM_DIR/nvm.sh\" && nvm uninstall {}'",
+                    ver
+                )
             };
 
             recs.push(Recommendation {
@@ -356,7 +360,10 @@ fn scan_pyenv(home: &Path, min_size: u64) -> Vec<Recommendation> {
                 let cmd = if is_current {
                     format!("# Keep this version (pyenv current): {}", version)
                 } else {
-                    format!("pyenv uninstall {}", version)
+                    format!(
+                        "bash -c 'export PYENV_ROOT=\"$HOME/.pyenv\" && export PATH=\"$PYENV_ROOT/bin:$PATH\" && eval \"$(pyenv init -)\" && pyenv uninstall {}'",
+                        version
+                    )
                 };
 
                 recs.push(Recommendation {

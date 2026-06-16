@@ -1,4 +1,5 @@
 const BLACKLIST: &[&str] = &[
+    // macOS
     "/System",
     "/bin",
     "/sbin",
@@ -9,6 +10,17 @@ const BLACKLIST: &[&str] = &[
     ".git/objects",
     ".git/refs",
     ".git/logs",
+    // Linux
+    "/proc",
+    "/sys",
+    "/dev",
+    "/boot",
+    "/etc",
+    "/usr/share",
+    "/lib",
+    "/lib64",
+    "/snap/bin",
+    "/run",
 ];
 
 pub fn is_blacklisted(path: &str) -> bool {

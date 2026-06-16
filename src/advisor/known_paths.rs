@@ -129,6 +129,77 @@ pub fn get_known_paths() -> Vec<KnownPath> {
         });
     }
 
+    // Linux-specific
+    if let Some(p) = paths.apt_cache() {
+        known.push(KnownPath {
+            path: p,
+            category: Category::Cache,
+            risk: Risk::Safe,
+            description: "APT package cache",
+            suggested_command: "sudo apt-get clean",
+        });
+    }
+
+    if let Some(p) = paths.snap_cache() {
+        known.push(KnownPath {
+            path: p,
+            category: Category::Cache,
+            risk: Risk::Safe,
+            description: "Snap package cache",
+            suggested_command: "sudo snap set system refresh.retain=2",
+        });
+    }
+
+    if let Some(p) = paths.flatpak_runtime() {
+        known.push(KnownPath {
+            path: p,
+            category: Category::Cache,
+            risk: Risk::Low,
+            description: "Flatpak unused runtimes",
+            suggested_command: "flatpak uninstall --unused",
+        });
+    }
+
+    if let Some(p) = paths.journal_logs() {
+        known.push(KnownPath {
+            path: p,
+            category: Category::Log,
+            risk: Risk::Safe,
+            description: "systemd journal logs",
+            suggested_command: "sudo journalctl --vacuum-size=100M",
+        });
+    }
+
+    if let Some(p) = paths.system_logs() {
+        known.push(KnownPath {
+            path: p,
+            category: Category::Log,
+            risk: Risk::Review,
+            description: "System log files",
+            suggested_command: "sudo find /var/log -name '*.gz' -delete",
+        });
+    }
+
+    if let Some(p) = paths.pacman_cache() {
+        known.push(KnownPath {
+            path: p,
+            category: Category::Cache,
+            risk: Risk::Safe,
+            description: "Pacman package cache",
+            suggested_command: "sudo pacman -Sc",
+        });
+    }
+
+    if let Some(p) = paths.dnf_cache() {
+        known.push(KnownPath {
+            path: p,
+            category: Category::Cache,
+            risk: Risk::Safe,
+            description: "DNF package cache",
+            suggested_command: "sudo dnf clean all",
+        });
+    }
+
     known
 }
 

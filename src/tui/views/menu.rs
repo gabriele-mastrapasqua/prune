@@ -20,7 +20,7 @@ pub fn render(f: &mut Frame, app: &App) {
         .split(f.size());
 
     // Title
-    let title = Paragraph::new("🧹 MACCLEAN - Disk Cleanup Advisor")
+    let title = Paragraph::new("🧹 prune - Disk Cleanup Advisor")
         .style(
             Style::default()
                 .fg(Color::Cyan)

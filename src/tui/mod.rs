@@ -9,9 +9,15 @@ use crossterm::{
 use ratatui::{backend::CrosstermBackend, Terminal};
 use std::io;
 
-use crate::advisor::models::{Category, Risk};
+use crate::advisor::models::{Category, FolderSummary, Recommendation, Risk};
 use crate::advisor::scanner::AdvisorEngine;
+use crate::advisor::user_folders;
 use app::{App, AppMode};
+
+type ScanHandle = std::thread::JoinHandle<()>;
+type ScanReceiver = std::sync::mpsc::Receiver<Vec<Recommendation>>;
+type DiskHandle = std::thread::JoinHandle<()>;
+type DiskReceiver = std::sync::mpsc::Receiver<(Vec<FolderSummary>, Option<FolderSummary>)>;
 
 pub fn run(dev_mode: bool, min_size: Option<&str>, risk_limit: Option<&str>) -> io::Result<()> {
     // Setup terminal
@@ -42,20 +48,35 @@ pub fn run(dev_mode: bool, min_size: Option<&str>, risk_limit: Option<&str>) -> 
     terminal.show_cursor()?;
 
     // If user selected items for deletion, execute them
-    if !app.selected_for_deletion.is_empty() && app.confirmed_deletion {
-        execute_deletions(&app);
+    if app.confirmed_deletion {
+        if !app.selected_for_deletion.is_empty() {
+            execute_deletions(&app);
+        }
+        if !app.apps_for_uninstall.is_empty() {
+            execute_app_uninstalls(&app);
+        }
     }
 
     result
 }
 
 fn run_app(terminal: &mut Terminal<CrosstermBackend<io::Stdout>>, app: &mut App) -> io::Result<()> {
+    use std::time::Duration;
+
+    let mut _scan_handle: Option<ScanHandle> = None;
+    let mut scan_rx: Option<ScanReceiver> = None;
+    let mut _disk_handle: Option<DiskHandle> = None;
+    let mut disk_rx: Option<DiskReceiver> = None;
+
     loop {
         terminal.draw(|f| match app.mode {
             AppMode::Menu => views::menu::render(f, app),
             AppMode::Scanning => views::scan::render(f, app),
+            AppMode::Dashboard => views::dashboard::render(f, app),
             AppMode::Results => views::results::render(f, app),
             AppMode::Details(idx) => views::details::render(f, app, idx),
+            AppMode::AppManager => views::apps::render(f, app),
+            AppMode::DiskAnalyzer => views::disk_analyzer::render(f, app),
             AppMode::ConfirmDeletion => views::confirm::render(f, app),
             AppMode::Help => views::help::render(f, app),
             AppMode::Quit => {}
@@ -65,30 +86,91 @@ fn run_app(terminal: &mut Terminal<CrosstermBackend<io::Stdout>>, app: &mut App)
             return Ok(());
         }
 
-        if let Event::Key(key) = event::read()? {
-            if key.kind != KeyEventKind::Press {
-                continue;
-            }
+        // Animate spinner during scan
+        if matches!(app.mode, AppMode::Scanning) && !app.scan_complete {
+            app.scan_frame = (app.scan_frame + 1) % 20;
+        }
 
-            match app.mode {
-                AppMode::Menu => handle_menu_input(app, key.code),
-                AppMode::Scanning => handle_scan_input(app, key.code),
-                AppMode::Results => handle_results_input(app, key.code),
-                AppMode::Details(idx) => handle_details_input(app, key.code, idx),
-                AppMode::ConfirmDeletion => handle_confirm_input(app, key.code),
-                AppMode::Help => handle_help_input(app, key.code),
-                AppMode::Quit => {}
+        // Animate spinner during disk analysis
+        if matches!(app.mode, AppMode::DiskAnalyzer) && !app.disk_scan_complete {
+            app.scan_frame = (app.scan_frame + 1) % 10;
+        }
+
+        // Check for scan results from background thread
+        if let Some(ref rx) = scan_rx {
+            if let Ok(recs) = rx.try_recv() {
+                app.recommendations = recs;
+                app.scan_complete = true;
+                scan_rx = None;
+                _scan_handle = None;
+            }
+        }
+
+        // Check for disk analyzer results from background thread
+        if let Some(ref rx) = disk_rx {
+            if let Ok((folders, home)) = rx.try_recv() {
+                app.folder_summaries = folders;
+                app.home_summary = home;
+                app.disk_scan_complete = true;
+                disk_rx = None;
+                _disk_handle = None;
+            }
+        }
+
+        // Auto-start disk scan when entering DiskAnalyzer mode
+        if matches!(app.mode, AppMode::DiskAnalyzer) && !app.disk_scan_complete && disk_rx.is_none() {
+            let (handle, rx) = start_disk_scan(app);
+            _disk_handle = Some(handle);
+            disk_rx = Some(rx);
+        }
+
+        // Non-blocking event read with timeout for animation
+        let event_available = event::poll(Duration::from_millis(100))?;
+
+        if event_available {
+            if let Event::Key(key) = event::read()? {
+                if key.kind != KeyEventKind::Press {
+                    continue;
+                }
+
+                match app.mode {
+                    AppMode::Menu => {
+                        if let Some((handle, rx)) = handle_menu_input(app, key.code) {
+                            _scan_handle = Some(handle);
+                            scan_rx = Some(rx);
+                        }
+                    }
+                    AppMode::Scanning => {
+                        // If scan is running in background, mark for cancellation
+                        if !app.scan_complete {
+                            app.scan_cancelled = true;
+                            app.mode = AppMode::Menu;
+                            _scan_handle = None;
+                            scan_rx = None;
+                        } else {
+                            handle_scan_input(app, key.code);
+                        }
+                    }
+                    AppMode::Dashboard => handle_dashboard_input(app, key.code),
+                    AppMode::Results => handle_results_input(app, key.code),
+                    AppMode::Details(idx) => handle_details_input(app, key.code, idx),
+                    AppMode::AppManager => handle_apps_input(app, key.code),
+                    AppMode::DiskAnalyzer => handle_disk_analyzer_input(app, key.code),
+                    AppMode::ConfirmDeletion => handle_confirm_input(app, key.code),
+                    AppMode::Help => handle_help_input(app, key.code),
+                    AppMode::Quit => {}
+                }
             }
         }
 
         // If scanning, check if done
         if matches!(app.mode, AppMode::Scanning) && app.scan_complete {
-            app.mode = AppMode::Results;
+            app.mode = AppMode::Dashboard;
         }
     }
 }
 
-fn handle_menu_input(app: &mut App, key: KeyCode) {
+fn handle_menu_input(app: &mut App, key: KeyCode) -> Option<(ScanHandle, ScanReceiver)> {
     match key {
         KeyCode::Char('q') | KeyCode::Esc => app.mode = AppMode::Quit,
         KeyCode::Up | KeyCode::Char('k') => {
@@ -106,26 +188,41 @@ fn handle_menu_input(app: &mut App, key: KeyCode) {
                 0 => {
                     // Full scan with DEV mode
                     app.dev_mode = true;
-                    start_scan(app);
+                    return Some(start_scan(app));
                 }
                 1 => {
                     // Scan without DEV
                     app.dev_mode = false;
-                    start_scan(app);
+                    return Some(start_scan(app));
                 }
                 2 => {
                     // Scan AI only
                     app.dev_mode = false;
                     app.categories = Some(vec![Category::AiModel]);
-                    start_scan(app);
+                    return Some(start_scan(app));
                 }
                 3 => {
-                    // View history (TODO)
+                    // Disk Analyzer
+                    app.disk_scan_complete = false;
+                    app.folder_summaries.clear();
+                    app.home_summary = None;
+                    app.disk_selected_index = 0;
+                    app.mode = AppMode::DiskAnalyzer;
                 }
                 4 => {
-                    // Settings (TODO)
+                    // App Manager
+                    app.apps = crate::advisor::app_scanner::scan_applications();
+                    app.app_selected_index = 0;
+                    app.apps_for_uninstall.clear();
+                    app.mode = AppMode::AppManager;
                 }
                 5 => {
+                    // View history (TODO)
+                }
+                6 => {
+                    // Settings (TODO)
+                }
+                7 => {
                     app.mode = AppMode::Help;
                 }
                 _ => {}
@@ -133,6 +230,7 @@ fn handle_menu_input(app: &mut App, key: KeyCode) {
         }
         _ => {}
     }
+    None
 }
 
 fn handle_scan_input(app: &mut App, key: KeyCode) {
@@ -141,9 +239,77 @@ fn handle_scan_input(app: &mut App, key: KeyCode) {
     }
 }
 
+fn handle_dashboard_input(app: &mut App, key: KeyCode) {
+    match key {
+        KeyCode::Char('q') | KeyCode::Esc => app.mode = AppMode::Menu,
+        KeyCode::Enter | KeyCode::Tab => app.mode = AppMode::Results,
+        KeyCode::Char('?') => app.mode = AppMode::Help,
+        _ => {}
+    }
+}
+
+fn handle_apps_input(app: &mut App, key: KeyCode) {
+    match key {
+        KeyCode::Char('q') | KeyCode::Esc => app.mode = AppMode::Menu,
+        KeyCode::Tab => {
+            app.show_sidebar = !app.show_sidebar;
+        }
+        KeyCode::Up | KeyCode::Char('k') => {
+            if app.app_selected_index > 0 {
+                app.app_selected_index -= 1;
+            }
+        }
+        KeyCode::Down | KeyCode::Char('j') => {
+            if app.app_selected_index < app.apps.len().saturating_sub(1) {
+                app.app_selected_index += 1;
+            }
+        }
+        KeyCode::Char(' ') => {
+            if app.apps_for_uninstall.contains(&app.app_selected_index) {
+                app.apps_for_uninstall.remove(&app.app_selected_index);
+            } else {
+                app.apps_for_uninstall.insert(app.app_selected_index);
+            }
+        }
+        KeyCode::Char('c') => {
+            if !app.apps_for_uninstall.is_empty() {
+                app.confirm_target = app::ConfirmTarget::Apps;
+                app.mode = AppMode::ConfirmDeletion;
+            }
+        }
+        KeyCode::Char('?') => {
+            app.mode = AppMode::Help;
+        }
+        _ => {}
+    }
+}
+
+fn handle_disk_analyzer_input(app: &mut App, key: KeyCode) {
+    match key {
+        KeyCode::Char('q') | KeyCode::Esc => app.mode = AppMode::Menu,
+        KeyCode::Tab => {
+            app.show_sidebar = !app.show_sidebar;
+        }
+        KeyCode::Up | KeyCode::Char('k') => {
+            if app.disk_selected_index > 0 {
+                app.disk_selected_index -= 1;
+            }
+        }
+        KeyCode::Down | KeyCode::Char('j') => {
+            if app.disk_selected_index < app.folder_summaries.len().saturating_sub(1) {
+                app.disk_selected_index += 1;
+            }
+        }
+        _ => {}
+    }
+}
+
 fn handle_results_input(app: &mut App, key: KeyCode) {
     match key {
         KeyCode::Char('q') | KeyCode::Esc => app.mode = AppMode::Menu,
+        KeyCode::Tab => {
+            app.show_sidebar = !app.show_sidebar;
+        }
         KeyCode::Up | KeyCode::Char('k') => {
             if app.selected_index > 0 {
                 app.selected_index -= 1;
@@ -178,6 +344,7 @@ fn handle_results_input(app: &mut App, key: KeyCode) {
         }
         KeyCode::Char('c') => {
             if !app.selected_for_deletion.is_empty() {
+                app.confirm_target = app::ConfirmTarget::Recommendations;
                 app.mode = AppMode::ConfirmDeletion;
             }
         }
@@ -225,9 +392,11 @@ fn handle_help_input(app: &mut App, key: KeyCode) {
     }
 }
 
-fn start_scan(app: &mut App) {
+fn start_scan(app: &mut App) -> (ScanHandle, ScanReceiver) {
     app.mode = AppMode::Scanning;
     app.scan_complete = false;
+    app.scan_cancelled = false;
+    app.scan_frame = 0;
 
     let engine = AdvisorEngine {
         min_size: app.min_size,
@@ -238,10 +407,35 @@ fn start_scan(app: &mut App) {
         older_than_days: None,
     };
 
-    // Run scan in background (simplified - runs synchronously for now)
-    let recs = engine.scan_home();
-    app.recommendations = recs;
-    app.scan_complete = true;
+    let (tx, rx) = std::sync::mpsc::channel();
+
+    let handle = std::thread::spawn(move || {
+        let recs = engine.scan_home();
+        let _ = tx.send(recs);
+    });
+
+    (handle, rx)
+}
+
+fn start_disk_scan(_app: &mut App) -> (DiskHandle, DiskReceiver) {
+    let home = std::env::var("HOME").unwrap_or_default();
+    let home_path = std::path::PathBuf::from(&home);
+
+    let (tx, rx) = std::sync::mpsc::channel();
+
+    let handle = std::thread::spawn(move || {
+        let mut folders = user_folders::scan_user_folders(&home_path);
+        let home_summary = user_folders::scan_home_summary(&home_path);
+        
+        // Insert Home as first entry
+        if let Some(ref home) = home_summary {
+            folders.insert(0, home.clone());
+        }
+        
+        let _ = tx.send((folders, home_summary));
+    });
+
+    (handle, rx)
 }
 
 fn execute_deletions(app: &App) {
@@ -279,6 +473,66 @@ fn execute_deletions(app: &App) {
     }
 
     println!("✨ Cleanup complete!");
+}
+
+fn execute_app_uninstalls(app: &App) {
+    use std::process::Command;
+
+    println!("\n📦 Uninstalling applications...\n");
+
+    let mut indices: Vec<_> = app.apps_for_uninstall.iter().copied().collect();
+    indices.sort();
+
+    for idx in indices {
+        if let Some(app_info) = app.apps.get(idx) {
+            println!("  Uninstalling: {} ({})", app_info.name, crate::advisor::models::human_bytes(app_info.total_size));
+
+            // Remove app bundle
+            println!("    Removing: {}", app_info.bundle_path);
+            let output = Command::new("rm")
+                .arg("-rf")
+                .arg(&app_info.bundle_path)
+                .output();
+
+            match output {
+                Ok(o) if o.status.success() => {
+                    println!("    ✅ App bundle removed");
+                }
+                Ok(o) => {
+                    let stderr = String::from_utf8_lossy(&o.stderr);
+                    println!("    ❌ Failed: {}", stderr);
+                }
+                Err(e) => {
+                    println!("    ❌ Error: {}", e);
+                }
+            }
+
+            // Remove support directories
+            for dir in &app_info.support_dirs {
+                println!("    Removing: {}", dir);
+                let output = Command::new("rm")
+                    .arg("-rf")
+                    .arg(dir)
+                    .output();
+
+                match output {
+                    Ok(o) if o.status.success() => {
+                        println!("    ✅ Removed");
+                    }
+                    Ok(o) => {
+                        let stderr = String::from_utf8_lossy(&o.stderr);
+                        println!("    ❌ Failed: {}", stderr);
+                    }
+                    Err(e) => {
+                        println!("    ❌ Error: {}", e);
+                    }
+                }
+            }
+            println!();
+        }
+    }
+
+    println!("✨ Uninstall complete!");
 }
 
 fn parse_size(s: &str) -> Option<u64> {

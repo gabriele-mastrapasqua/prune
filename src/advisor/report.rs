@@ -105,6 +105,9 @@ fn category_label(category: &Category) -> String {
         Category::SystemTemp => "🗑️ System Temp".to_string(),
         Category::Duplicate => "📑 Duplicate Files".to_string(),
         Category::Snapshot => "📸 Snapshots".to_string(),
+        Category::Application => "📦 Applications".to_string(),
+        Category::AutoUpdate => "🔄 Auto-Update Residue".to_string(),
+        Category::DevTool => "🧠 Dev/AI Tools".to_string(),
         Category::Unknown => "❓ Unknown".to_string(),
     }
 }

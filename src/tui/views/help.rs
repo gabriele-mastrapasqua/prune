@@ -55,9 +55,10 @@ pub fn render(f: &mut Frame, _app: &App) {
                 .add_modifier(Modifier::BOLD),
         )),
         Line::from("  Space  Toggle selection for deletion"),
+        Line::from("  Tab    Toggle detail sidebar"),
         Line::from("  a      Select all SAFE items"),
         Line::from("  c      Cleanup selected items"),
-        Line::from("  Enter  View details"),
+        Line::from("  Enter  View full details"),
         Line::from(""),
         Line::from(Span::styled(
             "Details View:",
@@ -67,6 +68,16 @@ pub fn render(f: &mut Frame, _app: &App) {
         )),
         Line::from("  y  Mark for deletion"),
         Line::from("  n  Skip"),
+        Line::from(""),
+        Line::from(Span::styled(
+            "App Manager:",
+            Style::default()
+                .fg(Color::Yellow)
+                .add_modifier(Modifier::BOLD),
+        )),
+        Line::from("  u      Toggle uninstall mark"),
+        Line::from("  Tab    Toggle detail sidebar"),
+        Line::from("  c      Confirm uninstall"),
         Line::from(""),
         Line::from(Span::styled(
             "Risk Levels:",

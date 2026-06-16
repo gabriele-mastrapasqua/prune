@@ -182,4 +182,71 @@ impl PlatformPaths {
     pub fn ollama_models(&self) -> Option<PathBuf> {
         self.platform.home_dir().map(|h| h.join(".ollama/models"))
     }
+
+    pub fn apt_cache(&self) -> Option<PathBuf> {
+        if self.platform == Platform::Linux {
+            Some(PathBuf::from("/var/cache/apt/archives"))
+        } else {
+            None
+        }
+    }
+
+    pub fn snap_cache(&self) -> Option<PathBuf> {
+        if self.platform == Platform::Linux {
+            Some(PathBuf::from("/var/lib/snapd/cache"))
+        } else {
+            None
+        }
+    }
+
+    pub fn flatpak_runtime(&self) -> Option<PathBuf> {
+        if self.platform == Platform::Linux {
+            self.platform
+                .home_dir()
+                .map(|h| h.join(".local/share/flatpak/runtime"))
+        } else {
+            None
+        }
+    }
+
+    pub fn journal_logs(&self) -> Option<PathBuf> {
+        if self.platform == Platform::Linux {
+            Some(PathBuf::from("/var/log/journal"))
+        } else {
+            None
+        }
+    }
+
+    #[allow(dead_code)]
+    pub fn tmp_dir(&self) -> Option<PathBuf> {
+        if self.platform == Platform::Linux {
+            Some(PathBuf::from("/tmp"))
+        } else {
+            std::env::temp_dir().into()
+        }
+    }
+
+    pub fn system_logs(&self) -> Option<PathBuf> {
+        if self.platform == Platform::Linux {
+            Some(PathBuf::from("/var/log"))
+        } else {
+            None
+        }
+    }
+
+    pub fn pacman_cache(&self) -> Option<PathBuf> {
+        if self.platform == Platform::Linux {
+            Some(PathBuf::from("/var/cache/pacman/pkg"))
+        } else {
+            None
+        }
+    }
+
+    pub fn dnf_cache(&self) -> Option<PathBuf> {
+        if self.platform == Platform::Linux {
+            Some(PathBuf::from("/var/cache/dnf"))
+        } else {
+            None
+        }
+    }
 }

@@ -33,6 +33,13 @@ pub fn evaluate_rules(base: &std::path::Path, no_dev: bool, _no_ai: bool) -> Vec
     // Trash (cross-platform)
     scan_trash(base, &mut recommendations);
 
+    // Linux-specific rules
+    if cfg!(target_os = "linux") {
+        scan_linux_rotated_logs(&mut recommendations);
+        scan_pacman_cache(&mut recommendations);
+        scan_dnf_cache(&mut recommendations);
+    }
+
     recommendations
 }
 
@@ -280,6 +287,90 @@ fn scan_macos_installers(recs: &mut Vec<Recommendation>) {
                     });
                 }
             }
+        }
+    }
+}
+
+fn scan_linux_rotated_logs(recs: &mut Vec<Recommendation>) {
+    let var_log = std::path::Path::new("/var/log");
+    if !var_log.exists() {
+        return;
+    }
+    let entries = match std::fs::read_dir(var_log) {
+        Ok(e) => e,
+        Err(_) => return,
+    };
+    let mut total_rotated: u64 = 0;
+    let mut count: u32 = 0;
+    for entry in entries.flatten() {
+        let path = entry.path();
+        if !path.is_file() {
+            continue;
+        }
+        let name = match path.file_name().and_then(|n| n.to_str()) {
+            Some(n) => n,
+            None => continue,
+        };
+        if name.ends_with(".gz") || name.ends_with(".old") || name.ends_with(".xz") || name.ends_with(".bz2") {
+            if let Ok(meta) = std::fs::metadata(&path) {
+                total_rotated += meta.len();
+                count += 1;
+            }
+        }
+    }
+    if count > 0 && total_rotated > 100 * 1024 * 1024 {
+        recs.push(Recommendation {
+            category: Category::Log,
+            path: var_log.display().to_string(),
+            size: total_rotated,
+            risk: Risk::Safe,
+            reason: format!(
+                "{} rotated log files in /var/log ({})",
+                count,
+                human_bytes(total_rotated)
+            ),
+            suggested_command: "sudo find /var/log -name '*.gz' -o -name '*.old' -o -name '*.xz' -o -name '*.bz2' | xargs sudo rm -f".to_string(),
+            last_accessed_days: None,
+        });
+    }
+}
+
+fn scan_pacman_cache(recs: &mut Vec<Recommendation>) {
+    let cache = std::path::Path::new("/var/cache/pacman/pkg");
+    if !cache.exists() {
+        return;
+    }
+    if let Ok(total) = dir_size(cache) {
+        if total > 500 * 1024 * 1024 {
+            recs.push(Recommendation {
+                category: Category::Cache,
+                path: cache.display().to_string(),
+                size: total,
+                risk: Risk::Safe,
+                reason: format!("Pacman package cache: {}", human_bytes(total)),
+                suggested_command: "sudo pacman -Sc".to_string(),
+                last_accessed_days: None,
+            });
+        }
+    }
+}
+
+fn scan_dnf_cache(recs: &mut Vec<Recommendation>) {
+    let cache = std::path::Path::new("/var/cache/dnf");
+    if !cache.exists() {
+        return;
+    }
+    if let Ok(total) = dir_size(cache) {
+        if total > 200 * 1024 * 1024 {
+            recs.push(Recommendation {
+                category: Category::Cache,
+                path: cache.display().to_string(),
+                size: total,
+                risk: Risk::Safe,
+                reason: format!("DNF package cache: {}", human_bytes(total)),
+                suggested_command: "sudo dnf clean all".to_string(),
+                last_accessed_days: None,
+            });
         }
     }
 }

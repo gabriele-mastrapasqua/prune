@@ -1,3 +1,5 @@
+pub mod app_scanner;
+pub mod cli_tools_scanner;
 pub mod heuristics;
 pub mod history;
 pub mod known_paths;
@@ -10,4 +12,6 @@ pub mod report;
 pub mod rules;
 pub mod safe_list;
 pub mod scanner;
+pub mod update_scanner;
+pub mod user_folders;
 pub mod version_manager;

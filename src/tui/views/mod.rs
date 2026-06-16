@@ -1,5 +1,8 @@
+pub mod apps;
 pub mod confirm;
+pub mod dashboard;
 pub mod details;
+pub mod disk_analyzer;
 pub mod help;
 pub mod menu;
 pub mod results;

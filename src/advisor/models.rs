@@ -1,4 +1,5 @@
 use serde::Serialize;
+use std::path::PathBuf;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize)]
 #[allow(dead_code)]
@@ -12,6 +13,9 @@ pub enum Category {
     SystemTemp,
     Duplicate,
     Snapshot,
+    Application,
+    AutoUpdate,
+    DevTool,
     Unknown,
 }
 
@@ -47,6 +51,42 @@ pub struct Recommendation {
     pub reason: String,
     pub suggested_command: String,
     pub last_accessed_days: Option<u64>,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct AppInfo {
+    pub name: String,
+    pub bundle_path: String,
+    pub bundle_id: String,
+    pub total_size: u64,
+    pub app_size: u64,
+    pub support_size: u64,
+    pub cache_size: u64,
+    pub last_used_days: Option<u64>,
+    pub version: Option<String>,
+    pub support_dirs: Vec<String>,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct FolderSummary {
+    pub name: String,
+    pub path: PathBuf,
+    pub total_size: u64,
+    pub file_count: u64,
+    pub old_files_90d: u64,
+    pub old_files_180d: u64,
+    pub old_files_365d: u64,
+    pub top_files: Vec<TopFile>,
+    pub subfolder_sizes: Vec<(String, u64)>,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct TopFile {
+    pub path: PathBuf,
+    pub name: String,
+    pub size: u64,
+    pub last_accessed_days: Option<u64>,
+    pub extension: String,
 }
 
 #[derive(Debug, Clone)]

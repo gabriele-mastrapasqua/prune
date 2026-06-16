@@ -1,3 +1,4 @@
+use crate::advisor::cli_tools_scanner;
 use crate::advisor::heuristics;
 use crate::advisor::known_paths;
 use crate::advisor::ml_library;
@@ -5,6 +6,8 @@ use crate::advisor::models::*;
 use crate::advisor::package_manager;
 use crate::advisor::rules;
 use crate::advisor::safe_list;
+use crate::advisor::update_scanner;
+use crate::advisor::user_folders;
 use crate::advisor::version_manager;
 use std::path::{Path, PathBuf};
 
@@ -71,6 +74,18 @@ impl AdvisorEngine {
             recommendations.extend(ml_recs);
         }
 
+        // 8. Scan auto-update residue (ShipIt, Sparkle, etc.)
+        let update_recs = update_scanner::scan_update_residue(&home, self.min_size);
+        recommendations.extend(update_recs);
+
+        // 9. Scan dev/AI CLI tools (Claude Code, Gemini CLI, etc.)
+        let cli_recs = cli_tools_scanner::scan_cli_tools(&home, self.min_size);
+        recommendations.extend(cli_recs);
+
+        // 10. Scan user folders (Downloads, Documents, etc.) for large/old files
+        let folder_recs = user_folders::scan_user_folders_as_recommendations(&home, self.min_size);
+        recommendations.extend(folder_recs);
+
         // Filter by risk, size, category
         recommendations.retain(|r| {
             if !self.risk_ok(&r.risk) {
@@ -95,6 +110,9 @@ impl AdvisorEngine {
             }
             true
         });
+
+        // Deduplicate by path: merge categories, keep largest size, safest risk
+        recommendations = deduplicate_recommendations(recommendations);
 
         // Sort by size descending
         recommendations.sort_by_key(|b| std::cmp::Reverse(b.size));
@@ -291,4 +309,76 @@ fn expand_tilde(path: &str) -> PathBuf {
         }
     }
     PathBuf::from(path)
+}
+
+/// Deduplicate recommendations by path.
+/// When duplicates exist, merge their categories, keep the largest size,
+/// safest risk level, and combine reasons.
+fn deduplicate_recommendations(recs: Vec<Recommendation>) -> Vec<Recommendation> {
+    use std::collections::HashMap;
+
+    let mut by_path: HashMap<String, Vec<Recommendation>> = HashMap::new();
+    for rec in recs {
+        by_path.entry(rec.path.clone()).or_default().push(rec);
+    }
+
+    let mut result = Vec::new();
+    for (_path, group) in by_path {
+        if group.len() == 1 {
+            result.push(group.into_iter().next().unwrap());
+            continue;
+        }
+
+        // Merge duplicates
+        let merged = group.into_iter().reduce(|mut a, b| {
+            // Keep the larger size
+            if b.size > a.size {
+                a.size = b.size;
+            }
+
+            // Keep the safest risk (lowest ordinal)
+            if b.risk < a.risk {
+                a.risk = b.risk;
+            }
+
+            // Merge categories: if different, use the more specific one
+            // (prefer non-Unknown, prefer Cache over generic)
+            if a.category != b.category {
+                // If one is Unknown, use the other
+                if matches!(a.category, Category::Unknown) {
+                    a.category = b.category;
+                }
+                // Otherwise keep 'a' (first encountered, usually more specific)
+            }
+
+            // Merge reasons
+            if a.reason != b.reason {
+                a.reason = format!("{} | {}", a.reason, b.reason);
+            }
+
+            // Prefer the more actionable command
+            if b.suggested_command.len() > a.suggested_command.len() {
+                a.suggested_command = b.suggested_command;
+            }
+
+            // Keep the more recent last_accessed_days (smaller = more recent)
+            match (a.last_accessed_days, b.last_accessed_days) {
+                (Some(ad), Some(bd)) => {
+                    a.last_accessed_days = Some(ad.min(bd));
+                }
+                (None, Some(_)) => {
+                    a.last_accessed_days = b.last_accessed_days;
+                }
+                _ => {}
+            }
+
+            a
+        });
+
+        if let Some(rec) = merged {
+            result.push(rec);
+        }
+    }
+
+    result
 }
